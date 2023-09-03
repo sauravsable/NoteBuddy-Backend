@@ -4,15 +4,15 @@ const bodyparser=require('body-parser')
 const cors=require('cors');
 const bcrypt=require("bcryptjs");
 const session=require('express-session');
-// const Mail=require('./mail')
+const Mail=require('./mail')
+const requestMail = require('./contactMail');
 require('dotenv').config()
 
-const username = process.env.MONGODB_USERNAME;
-const password = process.env.MONGODB_PASSWORD;
+const link = process.env.MONGO_LINK;
 
 const app=express();
-mongoose.connect(`mongodb+srv://${username}:${password}@cluster0.p0ovcj7.mongodb.net/Notebuddy`).then(()=> console.log("Database connected"))
-.catch(err => console.log(err));
+mongoose.connect(link).then(()=> console.log("Database connected")).catch(err => console.log(err));
+
 const usermodel=require('./db/user');
 const productmodel=require('./db/product');
 
@@ -22,13 +22,9 @@ app.use(express.json());
 app.use(cors({origin:'http://localhost:3000',credentials:true}));
 
 app.use(session({
-secret:"Notebuddy",
+secret:"Hello welcome to NoteBuddy",
 resave:false,
 saveUninitialized:false,
-cookie:{
-    maxAge:3600000,
-    httpOnly:true
-}
 }));
 
 app.post("/register",async(req,res)=>{
@@ -40,15 +36,15 @@ app.post("/register",async(req,res)=>{
             res.json("exist");
         }
         else{
-            // let mailsend=await Mail("sauravsable4102@gmail.com");
             req.body.password=await bcrypt.hash(req.body.password,10);
     
             let user=new usermodel(req.body);
             let data=await user.save();
             
+            console.log("signup session");
+            console.log(req.session);
             req.session.email=req.body.email;
-            console.log(req.session.email);
-
+            req.session.name=req.body.name;
             res.send(data);
         }
     }
@@ -65,8 +61,10 @@ app.post("/login",async(req,res)=>{
             const ismatch=await bcrypt.compare(req.body.password,result.password);
 
             if(ismatch){
+                console.log("login session");
+                console.log(req.session);
                 req.session.email=req.body.email;
-                console.log(req.session.email);
+                req.session.name=result.name;
                 res.send(result);
             }
             else{
@@ -79,9 +77,44 @@ app.post("/login",async(req,res)=>{
     
 })
 
-app.get("/products",async(req,res)=>{
-   const products=await productmodel.find({status:"available"});
+app.get("/logout",(req,res)=>{
+    console.log(req.session);
+    console.log("session cleared");
+    req.session.destroy();
+})
 
+app.post("/getdata",(req,res)=>{
+    console.log(req.session);
+    console.log(req.body);
+    req.session.provideremail=req.body.email;
+    req.session.subject=req.body.subject;
+    req.session.semester=req.body.semester;
+    req.session.otp=Mail.otp;
+    console.log(Mail.otp);
+    Mail.sendMail(req.session.email);
+    res.json("true");
+})
+
+app.post("/confirmotp",(req,res)=>{
+    console.log("confirm otp session");
+    console.log(req.session);
+
+    if(req.body.otp==req.session.otp){
+        requestMail(req.session.provideremail,req.session.email,req.session.semester,req.session.subject);
+        res.json("true");
+    }
+    else{
+         res.json("false");
+    }
+})
+
+app.get("/products",async(req,res)=>{
+    console.log("product session");
+    console.log(req.session);
+    const products = await productmodel.find({
+        status: "available",
+        email: { $ne: req.session.email }
+      });
    if(products.length >0){
     res.send(products);
    }
@@ -90,8 +123,9 @@ app.get("/products",async(req,res)=>{
    }
 })
 
+
 app.get("/myproducts",async(req,res)=>{
-    console.log(req.session.email);
+    console.log(req.session);
     const products=await productmodel.find({email:req.session.email});
 
     if(products[0]){
@@ -100,22 +134,23 @@ app.get("/myproducts",async(req,res)=>{
     else{
      res.send({result:"No Products Found"});
     }
- })
+ }) 
 
 app.post("/addproduct",async(req,res)=>{
     console.log(req.body);
-    let obj={name:req.body.name,rollnumber:req.body.rollnumber,email:req.session.email,semester:req.body.semester,subject:req.body.subject,mobilenumber:req.body.mobilenumber,address:req.body.address,status:req.body.status};
+    console.log(req.session);
+    let obj={email:req.session.email,semester:req.body.semester,subject:req.body.subject,status:req.body.status};
     const product= new productmodel(obj);
     const result=await product.save();
     res.send(result);
 })
 
-app.delete("/product/:id",async(req,res)=>{
+app.delete("/deleteproduct/:id",async(req,res)=>{
     const result=await productmodel.deleteOne({_id:req.params.id});
     res.send(result);
 })
 
-app.get("/product/:id",async(req,res)=>{
+app.get("/getproducttoupdate/:id",async(req,res)=>{
     const result= await productmodel.findOne({_id:req.params.id});
 
     if(result){
@@ -127,7 +162,7 @@ app.get("/product/:id",async(req,res)=>{
 
 })
 
-app.put("/products/:id",async(req,res)=>{
+app.put("/updateproduct/:id",async(req,res)=>{
     const result= await productmodel.updateOne(
         {_id:req.params.id},
         {

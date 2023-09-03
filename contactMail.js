@@ -1,14 +1,12 @@
 const nodemailer = require('nodemailer');
 const {google} = require('googleapis');
-const otpGenerator=require("otp-generator");
-const otp=otpGenerator.generate(6, { upperCaseAlphabets: true, specialChars: false });
 const config = require('./config');
 const OAuth2 = google.auth.OAuth2;
 
 const OAuth2_client = new OAuth2(config.clientID,config.clientSecret);
 OAuth2_client.setCredentials({refresh_token:config.refreshToken});
 
-const sendMail=(recipient)=>
+const sendMail=(recipient,receiver,semester,subject)=>
 {
     const access_token =OAuth2_client.getAccessToken();
     const transport = nodemailer.createTransport(
@@ -26,10 +24,10 @@ const sendMail=(recipient)=>
     );
     const mailOption =
     {
-        from:`The G.O.A.T ${config.user}`,
+        from:config.user,
         to:recipient,
-        subject:'Confirm OTP to get in Touch with the Provider',
-        html:otp,
+        subject:'Requesting your Notes',
+        html:`Hello ${receiver} is requesting ${semester}th Semester Notes of ${subject} Subject. Please Get in Touch with them.`,
     }
     transport.sendMail(mailOption,(err,result)=>
     {
@@ -48,4 +46,4 @@ const sendMail=(recipient)=>
 }
 
 // sendMail("sauravsable4102@gmail.com");
-module.exports = {sendMail,otp};
+module.exports = sendMail;
