@@ -26,7 +26,10 @@ secret:process.env.SECRET_KEY,
 resave:false,
 saveUninitialized:false,
 }));
-
+app.get("/",(req,res)=>
+{
+    res.send("hello");
+})
 app.post("/register",async(req,res)=>{
 
     try{
