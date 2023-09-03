@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(cors({origin:'https://sauravnotebuddy.netlify.app',credentials:true}));
 
 app.use(session({
-secret:sauravecom,
+secret:"NoteBuddy",
 resave:false,
 saveUninitialized:false,
 }));
