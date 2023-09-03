@@ -1,12 +1,13 @@
 const express=require('express');
 const mongoose=require('mongoose');
-const bodyparser=require('body-parser')
+const bodyparser=require('body-parser');
 const cors=require('cors');
 const bcrypt=require("bcryptjs");
 const session=require('express-session');
-const Mail=require('./mail')
+const Mail=require('./mail');
 const requestMail = require('./contactMail');
-require('dotenv').config()
+require('dotenv').config();
+
 const port= process.env.PORT || 5000;
 const link = process.env.MONGO_LINK;
 
@@ -19,17 +20,18 @@ const productmodel=require('./db/product');
 app.use(bodyparser.urlencoded({ extended: true }));
 
 app.use(express.json());
-app.use(cors({origin:'https://sauravnotebuddy.netlify.app',credentials:true}));
+app.use(cors({origin:'http://localhost:3000',credentials:true}));
 
 app.use(session({
 secret:"Notebuddy",
 resave:true,
 saveUninitialized:true,
 }));
-app.get("/",(req,res)=>
-{
+
+app.get("/",(req,res)=>{
     res.send("hello");
-})
+});
+
 app.post("/register",async(req,res)=>{
 
     try{
@@ -55,7 +57,7 @@ app.post("/register",async(req,res)=>{
         res.json("not exist")
     }
 
-})
+});
 
 app.post("/login",async(req,res)=>{
 
@@ -78,17 +80,17 @@ app.post("/login",async(req,res)=>{
             res.json("Notfound");
         }
     
-})
+});
 
 app.get("/logout",(req,res)=>{
     console.log(req.session);
     console.log("session cleared");
     req.session.destroy();
-})
+});
 
 app.post("/getdata",(req,res)=>{
+    console.log("get data session");
     console.log(req.session);
-    console.log(req.body);
     req.session.provideremail=req.body.email;
     req.session.subject=req.body.subject;
     req.session.semester=req.body.semester;
@@ -96,7 +98,7 @@ app.post("/getdata",(req,res)=>{
     console.log(Mail.otp);
     Mail.sendMail(req.session.email);
     res.json("true");
-})
+});
 
 app.post("/confirmotp",(req,res)=>{
     console.log("confirm otp session");
@@ -109,11 +111,11 @@ app.post("/confirmotp",(req,res)=>{
     else{
          res.json("false");
     }
-})
+});
 
 app.get("/products",async(req,res)=>{
     console.log("product session");
-    console.log(req.session);
+    // console.log(req.session);
     const products = await productmodel.find({
         status: "available",
         email: { $ne: req.session.email }
@@ -124,10 +126,10 @@ app.get("/products",async(req,res)=>{
    else{
     res.send({result:"No Products Found"});
    }
-})
-
+});
 
 app.get("/myproducts",async(req,res)=>{
+    console.log("my product session");
     console.log(req.session);
     const products=await productmodel.find({email:req.session.email});
 
@@ -137,21 +139,21 @@ app.get("/myproducts",async(req,res)=>{
     else{
      res.send({result:"No Products Found"});
     }
- }) 
+}); 
 
 app.post("/addproduct",async(req,res)=>{
-    console.log(req.body);
+    console.log("add product session");
     console.log(req.session);
     let obj={email:req.session.email,semester:req.body.semester,subject:req.body.subject,status:req.body.status};
     const product= new productmodel(obj);
     const result=await product.save();
     res.send(result);
-})
+});
 
 app.delete("/deleteproduct/:id",async(req,res)=>{
     const result=await productmodel.deleteOne({_id:req.params.id});
     res.send(result);
-})
+});
 
 app.get("/getproducttoupdate/:id",async(req,res)=>{
     const result= await productmodel.findOne({_id:req.params.id});
@@ -163,7 +165,7 @@ app.get("/getproducttoupdate/:id",async(req,res)=>{
         res.send({result:"Not Found"});
     }
 
-})
+});
 
 app.put("/updateproduct/:id",async(req,res)=>{
     const result= await productmodel.updateOne(
@@ -173,20 +175,17 @@ app.put("/updateproduct/:id",async(req,res)=>{
         }
     )
     res.send(result);
-})
+});
 
 app.get("/search/:key",async(req,res)=>{
     const result= await productmodel.find({
         "$or":[
-            {name:{$regex:req.params.key}},
-            {rollnumber:{$regex:req.params.key}},
-            {year:{$regex:req.params.key}},
             {semester:{$regex:req.params.key}},
             {subject:{$regex:req.params.key}},
         ]
     })
     res.send(result);
-})
+});
 
 app.listen(port,()=>{
     console.log("server started");
