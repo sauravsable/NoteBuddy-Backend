@@ -47,5 +47,4 @@ const sendMail=(recipient)=>
     })
 }
 
-// sendMail("sauravsable4102@gmail.com");
 module.exports = {sendMail,otp};

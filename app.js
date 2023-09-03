@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(cors({origin:'http://localhost:3000',credentials:true}));
 
 app.use(session({
-secret:"Hello welcome to NoteBuddy",
+secret:process.env.SECRET_KEY,
 resave:false,
 saveUninitialized:false,
 }));
