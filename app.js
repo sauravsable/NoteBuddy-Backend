@@ -23,8 +23,8 @@ app.use(cors({origin:'https://sauravnotebuddy.netlify.app',credentials:true}));
 
 app.use(session({
 secret:"Notebuddy",
-resave:false,
-saveUninitialized:false,
+resave:true,
+saveUninitialized:true,
 }));
 app.get("/",(req,res)=>
 {
