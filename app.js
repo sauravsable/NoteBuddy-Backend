@@ -24,8 +24,8 @@ app.use(cors({origin:'https://sauravnotebuddy.netlify.app',credentials:true}));
 
 app.use(session({
 secret:"Notebuddy",
-resave:true,
-saveUninitialized:true,
+resave:false,
+saveUninitialized:false,
 }));
 
 app.get("/",(req,res)=>{
@@ -115,7 +115,7 @@ app.post("/confirmotp",(req,res)=>{
 
 app.get("/products",async(req,res)=>{
     console.log("product session");
-    // console.log(req.session);
+    console.log(req.session);
     const products = await productmodel.find({
         status: "available",
         email: { $ne: req.session.email }
