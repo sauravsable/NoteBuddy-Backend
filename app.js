@@ -7,7 +7,7 @@ const session=require('express-session');
 const Mail=require('./mail')
 const requestMail = require('./contactMail');
 require('dotenv').config()
-
+const port= process.env.PORT || 5000;
 const link = process.env.MONGO_LINK;
 
 const app=express();
@@ -188,6 +188,6 @@ app.get("/search/:key",async(req,res)=>{
     res.send(result);
 })
 
-app.listen("5000",()=>{
+app.listen(port,()=>{
     console.log("server started");
 });
