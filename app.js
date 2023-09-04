@@ -27,7 +27,7 @@ app.use(cookieSession({
 secret:"Notebuddy",
 name: 'session',
 maxAge: 24 * 60 * 60 * 1000,
-secure: false, // Set to true in production if using HTTPS
+secure: true, // Set to true in production if using HTTPS
 httpOnly: true,
 })
 );
