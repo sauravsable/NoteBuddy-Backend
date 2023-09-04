@@ -3,7 +3,7 @@ const mongoose=require('mongoose');
 const bodyparser=require('body-parser');
 const cors=require('cors');
 const bcrypt=require("bcryptjs");
-const session=require('express-session');
+const cookieSession=require('cookie-session');
 const Mail=require('./mail');
 const requestMail = require('./contactMail');
 require('dotenv').config();
@@ -16,17 +16,21 @@ mongoose.connect(link).then(()=> console.log("Database connected")).catch(err =>
 
 const usermodel=require('./db/user');
 const productmodel=require('./db/product');
+const messagemodel=require('./db/message');
 
 app.use(bodyparser.urlencoded({ extended: true }));
 
 app.use(express.json());
 app.use(cors({origin:'https://sauravnotebuddy.netlify.app',credentials:true}));
 
-app.use(session({
+app.use(cookieSession({
 secret:"Notebuddy",
-resave:false,
-saveUninitialized:false,
-}));
+name: 'session',
+maxAge: 24 * 60 * 60 * 1000,
+secure: false, // Set to true in production if using HTTPS
+httpOnly: true,
+})
+);
 
 app.get("/",(req,res)=>{
     res.send("hello");
@@ -85,7 +89,7 @@ app.post("/login",async(req,res)=>{
 app.get("/logout",(req,res)=>{
     console.log(req.session);
     console.log("session cleared");
-    req.session.destroy();
+    req.session = {};
 });
 
 app.post("/getdata",(req,res)=>{
@@ -186,6 +190,13 @@ app.get("/search/:key",async(req,res)=>{
     })
     res.send(result);
 });
+
+app.post("/sendmessage",async(req,res)=>{
+    let user=new messagemodel(req.body);
+    let data=await user.save();
+
+    res.json("true");
+})
 
 app.listen(port,()=>{
     console.log("server started");
