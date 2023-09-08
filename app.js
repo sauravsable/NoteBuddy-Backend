@@ -3,7 +3,7 @@ const mongoose=require('mongoose');
 const bodyparser=require('body-parser');
 const cors=require('cors');
 const bcrypt=require("bcryptjs");
-const cookieSession=require('cookie-session');
+const session=require('express-session');
 const Mail=require('./mail');
 const requestMail = require('./contactMail');
 require('dotenv').config();
@@ -22,15 +22,18 @@ app.use(bodyparser.urlencoded({ extended: true }));
 
 app.use(express.json());
 app.use(cors({origin:'https://sauravnotebuddy.netlify.app',credentials:true}));
+// app.use(cors({origin:'http://localhost:3000',credentials:true}));
 
-app.use(cookieSession({
-secret:"Notebuddy",
-name: 'session',
-maxAge: 24 * 60 * 60 * 1000,
-secure: true, // Set to true in production if using HTTPS
-httpOnly: true,
-})
-);
+app.use(session({
+    secret: 'Notebuddy',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000, 
+      httpOnly: true,
+    },
+  }));
+  
 
 app.get("/",(req,res)=>{
     res.send("hello");
@@ -89,7 +92,7 @@ app.post("/login",async(req,res)=>{
 app.get("/logout",(req,res)=>{
     console.log(req.session);
     console.log("session cleared");
-    req.session = {};
+    req.session.destroy();
 });
 
 app.post("/getdata",(req,res)=>{
