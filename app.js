@@ -23,8 +23,8 @@ const messagemodel=require('./db/message');
 app.use(bodyparser.urlencoded({ extended: true }));
 
 app.use(express.json());
-// app.use(cors({origin:'https://note-buddy-frontend-eight.vercel.app',credentials:true}));
-app.use(cors({origin:'http://localhost:3000',credentials:true}));
+app.use(cors({origin:'https://note-buddy-frontend-eight.vercel.app',credentials:true}));
+// app.use(cors({origin:'http://localhost:3000',credentials:true}));
 
 // const store = new MongoDBStore({
 //     uri: link,
