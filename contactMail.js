@@ -27,7 +27,7 @@ const sendMail=(recipient,receiver,semester,subject)=>
         from:config.user,
         to:recipient,
         subject:'Requesting your Notes',
-        html:`Hello Buddy your friend ${receiver} is requesting ${semester}th Semester Notes of ${subject} Subject. Please Get in Touch with them.`,
+        html:`Hello Buddy your friend ${receiver} is requesting Semester ${semester} Notes of ${subject} Subject. Please Get in Touch with them.`,
     }
     transport.sendMail(mailOption,(err,result)=>
     {
@@ -41,9 +41,7 @@ const sendMail=(recipient,receiver,semester,subject)=>
             console.log(result);
             return "Successfully Send"
         }
-        // transport.close();
     })
 }
 
-// sendMail("sauravsable4102@gmail.com");
 module.exports = sendMail;

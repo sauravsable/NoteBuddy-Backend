@@ -3,11 +3,11 @@ const mongoose=require('mongoose');
 const bodyparser=require('body-parser');
 const cors=require('cors');
 const bcrypt=require("bcryptjs");
-const session=require('express-session');
-// const MongoDBStore = require('connect-mongodb-session')(session);
 const Mail=require('./mail');
 const requestMail = require('./contactMail');
 require('dotenv').config();
+const { LocalStorage } = require('node-localstorage');
+const localStorage = new LocalStorage('./scratch');
 
 
 const port= process.env.PORT || 5000;
@@ -26,22 +26,6 @@ app.use(express.json());
 app.use(cors({origin:'https://note-buddy-frontend-eight.vercel.app',credentials:true}));
 // app.use(cors({origin:'http://localhost:3000',credentials:true}));
 
-// const store = new MongoDBStore({
-//     uri: link,
-//     collection: 'sessions',
-//   });
-
-  app.use(session({
-    secret:"notebuddy",
-    resave:false,
-    saveUninitialized:true,
-    cookie:
-    {
-        httpOnly:true,
-        maxAge:3600000,
-    }
-}));
-
 app.get("/",(req,res)=>{
     res.send("hello");
 });
@@ -55,7 +39,6 @@ app.post("/register",async(req,res)=>{
             res.json("exist");
         }
         else{
-            req.session.email=req.body.email;
             req.body.password=await bcrypt.hash(req.body.password,10);
             let user=new usermodel(req.body);
             let data=await user.save();
@@ -76,7 +59,7 @@ app.post("/login",async(req,res)=>{
             const ismatch=await bcrypt.compare(req.body.password,result.password);
 
             if(ismatch){
-                req.session.email=req.body.email;
+                localStorage.setItem('id',result._id);
                 res.send(result);
             }
             else{
@@ -89,48 +72,25 @@ app.post("/login",async(req,res)=>{
     
 });
 
-app.post("/logout",(req,res)=>{
-        if (req.sessionID) {
-          store.destroy(req.sessionID, (err) => {
-            if (err) {
-              console.error('Error destroying session:', err);
-            }
-          });
-        }
-    res.json(true);
-});
 
-app.post('/reload-detected', (req, res) => {
-    if (req.session) {
-      req.session.destroy((err) => {
-        if (err) {
-          console.error('Error destroying session:', err);
-        }
-        res.sendStatus(200);
-      });
-    } else {
-      res.sendStatus(200);
-    }
-  });
-
-app.post("/getdata",(req,res)=>{
-    console.log("get data session");
-    console.log(req.session);
-    req.session.provideremail=req.body.email;
-    req.session.subject=req.body.subject;
-    req.session.semester=req.body.semester;
-    req.session.otp=Mail.otp;
+let data={};
+let otp;
+app.post("/getdata",async (req,res)=>{
+    data.provideremail=req.body.email;
+    data.subject=req.body.subject;
+    data.semester=req.body.semester;
+    otp=Mail.otp;
     console.log(Mail.otp);
-    Mail.sendMail(req.session.email);
+    const storedValue = localStorage.getItem('id');
+    const result=await usermodel.findOne({_id:storedValue});
+    data.email=result.email;
+    Mail.sendMail(result.email);
     res.json("true");
 });
 
 app.post("/confirmotp",(req,res)=>{
-    console.log("confirm otp session");
-    console.log(req.session);
-
-    if(req.body.otp==req.session.otp){
-        requestMail(req.session.provideremail,req.session.email,req.session.semester,req.session.subject);
+    if(req.body.otp==otp){
+        requestMail(data.provideremail,data.email,data.semester,data.subject);
         res.json("true");
     }
     else{
@@ -139,10 +99,11 @@ app.post("/confirmotp",(req,res)=>{
 });
 
 app.get("/products",async(req,res)=>{
-    console.log(req.session);
+    const storedValue = localStorage.getItem('id');
+    const result=await usermodel.findOne({_id:storedValue});
     const products = await productmodel.find({
         status: "available",
-        email: { $ne: req.session.email }
+        email: { $ne: result.email }
       }); 
    if(products.length >0){
     res.send(products);
@@ -153,9 +114,9 @@ app.get("/products",async(req,res)=>{
 });
 
 app.get("/myproducts",async(req,res)=>{
-    console.log("my product session");
-    console.log(req.session);
-    const products=await productmodel.find({email:req.session.email});
+    const storedValue = localStorage.getItem('id');
+    const result=await usermodel.findOne({_id:storedValue});
+    const products=await productmodel.find({email:result.email});
 
     if(products[0]){
      res.send(products);
@@ -166,9 +127,9 @@ app.get("/myproducts",async(req,res)=>{
 }); 
 
 app.post("/addproduct",async(req,res)=>{
-    console.log("add product session");
-    console.log(req.session);
-    let obj={email:req.session.email,semester:req.body.semester,subject:req.body.subject,status:req.body.status};
+    const storedValue = localStorage.getItem('id');
+    const result1=await usermodel.findOne({_id:storedValue});
+    let obj={email:result1.email,semester:req.body.semester,subject:req.body.subject,status:req.body.status};
     const product= new productmodel(obj);
     const result=await product.save();
     res.send(result);

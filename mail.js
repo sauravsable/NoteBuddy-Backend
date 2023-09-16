@@ -26,7 +26,7 @@ const sendMail=(recipient)=>
     );
     const mailOption =
     {
-        from:`The G.O.A.T ${config.user}`,
+        from:`Notebuddy ${config.user}`,
         to:recipient,
         subject:'Confirm OTP to get in Touch with the Provider',
         html:otp,
@@ -43,7 +43,6 @@ const sendMail=(recipient)=>
             console.log(result);
             return "Successfully Send"
         }
-        // transport.close();
     })
 }
 
