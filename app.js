@@ -4,9 +4,11 @@ const bodyparser=require('body-parser');
 const cors=require('cors');
 const bcrypt=require("bcryptjs");
 const session=require('express-session');
+const MongoDBStore = require('connect-mongodb-session')(session);
 const Mail=require('./mail');
 const requestMail = require('./contactMail');
 require('dotenv').config();
+
 
 const port= process.env.PORT || 5000;
 const link = process.env.MONGO_LINK;
@@ -21,19 +23,26 @@ const messagemodel=require('./db/message');
 app.use(bodyparser.urlencoded({ extended: true }));
 
 app.use(express.json());
-app.use(cors({origin:'https://sauravnotebuddy.netlify.app',credentials:true}));
+app.use(cors({origin:'https://note-buddy-frontend-eight.vercel.app',credentials:true}));
 // app.use(cors({origin:'http://localhost:3000',credentials:true}));
 
-app.use(session({
-    secret: 'Notebuddy',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      maxAge: 24 * 60 * 60 * 1000, 
-      httpOnly: true,
-    },
-  }));
-  
+const store = new MongoDBStore({
+    uri: link,
+    collection: 'sessions',
+  });
+
+  app.use(
+    session({
+      secret: 'your-secret-key',
+      resave: false,
+      saveUninitialized: false,
+      store: store,
+      cookie: {
+        httpOnly: true,
+        maxAge: 3600000,
+      },
+    }) 
+  );
 
 app.get("/",(req,res)=>{
     res.send("hello");
@@ -52,11 +61,7 @@ app.post("/register",async(req,res)=>{
     
             let user=new usermodel(req.body);
             let data=await user.save();
-            
-            console.log("signup session");
-            console.log(req.session);
-            req.session.email=req.body.email;
-            req.session.name=req.body.name;
+            req.session.email=data.email;
             res.send(data);
         }
     }
@@ -73,10 +78,7 @@ app.post("/login",async(req,res)=>{
             const ismatch=await bcrypt.compare(req.body.password,result.password);
 
             if(ismatch){
-                console.log("login session");
-                console.log(req.session);
-                req.session.email=req.body.email;
-                req.session.name=result.name;
+                req.session.email=result.email;
                 res.send(result);
             }
             else{
@@ -89,11 +91,25 @@ app.post("/login",async(req,res)=>{
     
 });
 
-app.get("/logout",(req,res)=>{
+app.post("/logout",(req,res)=>{
     console.log(req.session);
     console.log("session cleared");
     req.session.destroy();
+    res.json(true);
 });
+
+app.post('/reload-detected', (req, res) => {
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+        }
+        res.sendStatus(200);
+      });
+    } else {
+      res.sendStatus(200);
+    }
+  });
 
 app.post("/getdata",(req,res)=>{
     console.log("get data session");
@@ -121,12 +137,10 @@ app.post("/confirmotp",(req,res)=>{
 });
 
 app.get("/products",async(req,res)=>{
-    console.log("product session");
-    console.log(req.session);
     const products = await productmodel.find({
         status: "available",
         email: { $ne: req.session.email }
-      });
+      }); 
    if(products.length >0){
     res.send(products);
    }
