@@ -9,7 +9,6 @@ require('dotenv').config();
 const { LocalStorage } = require('node-localstorage');
 const localStorage = new LocalStorage('./scratch');
 
-
 const port= process.env.PORT || 5000;
 const link = process.env.MONGO_LINK;
 
@@ -23,7 +22,7 @@ const messagemodel=require('./db/message');
 app.use(bodyparser.urlencoded({ extended: true }));
 
 app.use(express.json());
-app.use(cors({origin:'https://note-buddy-frontend-eight.vercel.app',credentials:true}));
+app.use(cors({origin:'https://notebuddy-nu.vercel.app',credentials:true}));
 // app.use(cors({origin:'http://localhost:3000',credentials:true}));
 
 app.get("/",(req,res)=>{
@@ -177,7 +176,7 @@ app.post("/sendmessage",async(req,res)=>{
     let data=await user.save();
 
     res.json("true");
-})
+});
 
 app.listen(port,()=>{
     console.log("server started");
