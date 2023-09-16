@@ -38,7 +38,7 @@ const store = new MongoDBStore({
       saveUninitialized: false,
       store: store,
       cookie: {
-        httpOnly: true,
+        httpsOnly: true,
         maxAge: 3600000,
       },
     }) 
