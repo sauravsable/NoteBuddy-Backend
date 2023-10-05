@@ -1,7 +1,7 @@
 const mongoose=require('mongoose');
 
 const productschema=new mongoose.Schema({
-    email:
+    userId:
     {
         type:String,
         required:true,

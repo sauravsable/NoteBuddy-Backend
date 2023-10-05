@@ -6,8 +6,6 @@ const bcrypt=require("bcryptjs");
 const Mail=require('./mail');
 const requestMail = require('./contactMail');
 require('dotenv').config();
-const { LocalStorage } = require('node-localstorage');
-const localStorage = new LocalStorage('./scratch');
 
 const port= process.env.PORT || 5000;
 const link = process.env.MONGO_LINK;
@@ -24,10 +22,6 @@ app.use(bodyparser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors({origin:'https://notebuddy-nu.vercel.app',credentials:true}));
 // app.use(cors({origin:'http://localhost:3000',credentials:true}));
-
-app.get("/",(req,res)=>{
-    res.send("hello");
-});
 
 app.post("/register",async(req,res)=>{
 
@@ -58,7 +52,6 @@ app.post("/login",async(req,res)=>{
             const ismatch=await bcrypt.compare(req.body.password,result.password);
 
             if(ismatch){
-                localStorage.setItem('id',result._id);
                 res.send(result);
             }
             else{
@@ -80,8 +73,8 @@ app.post("/getdata",async (req,res)=>{
     data.semester=req.body.semester;
     otp=Mail.otp;
     console.log(Mail.otp);
-    const storedValue = localStorage.getItem('id');
-    const result=await usermodel.findOne({_id:storedValue});
+
+    const result=await usermodel.findOne({_id:req.body.userId});
     data.email=result.email;
     Mail.sendMail(result.email);
     res.json("true");
@@ -97,12 +90,10 @@ app.post("/confirmotp",(req,res)=>{
     }
 });
 
-app.get("/products",async(req,res)=>{
-    const storedValue = localStorage.getItem('id');
-    const result=await usermodel.findOne({_id:storedValue});
+app.post("/products",async(req,res)=>{
     const products = await productmodel.find({
         status: "available",
-        email: { $ne: result.email }
+        userId: { $ne: req.body.userId}
       }); 
    if(products.length >0){
     res.send(products);
@@ -112,12 +103,9 @@ app.get("/products",async(req,res)=>{
    }
 });
 
-app.get("/myproducts",async(req,res)=>{
-    const storedValue = localStorage.getItem('id');
-    const result=await usermodel.findOne({_id:storedValue});
-    const products=await productmodel.find({email:result.email});
-
-    if(products[0]){
+app.post("/myproducts",async(req,res)=>{
+    const products=await productmodel.find({userId:req.body.userId});
+    if(products.length>0){
      res.send(products);
     }
     else{
@@ -126,9 +114,7 @@ app.get("/myproducts",async(req,res)=>{
 }); 
 
 app.post("/addproduct",async(req,res)=>{
-    const storedValue = localStorage.getItem('id');
-    const result1=await usermodel.findOne({_id:storedValue});
-    let obj={email:result1.email,semester:req.body.semester,subject:req.body.subject,status:req.body.status};
+    let obj={userId:req.body.userId,semester:req.body.formData.semester,subject:req.body.formData.subject,status:req.body.formData.status};
     const product= new productmodel(obj);
     const result=await product.save();
     res.send(result);
