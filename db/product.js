@@ -1,23 +1,13 @@
 const mongoose=require('mongoose');
 
 const productschema=new mongoose.Schema({
-    userId:
-    {
-        type:String,
-        required:true,
-    },
-    semester:{
-        type:String,
-        require:true
-    },
-    subject:{
-        type:String,
-        require:true
-    },
-    status:{
-        type:String,
-        require:true
-    }
+    userId:String,
+    userEmail:String,
+    userName:String,
+    userMobile:String,
+    semester:String,
+    subject:String,
+    status:String
 });
 
 module.exports=new mongoose.model("productdatas",productschema);
