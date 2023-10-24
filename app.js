@@ -140,20 +140,35 @@ app.post("/myproducts", async (req, res) => {
 });
 
 app.post("/addproduct", async (req, res) => {
-  let obj = {
-    userId: req.body.userId,
-    userEmail: req.body.userEmail,
-    userName:req.body.userName,
-    userMobile:req.body.userMobile,
-    semester: req.body.formData.semester,
-    subject: req.body.formData.subject,
-    status: req.body.formData.status,
-  };
+  const { userId, userEmail, userName, userMobile, formData } = req.body;
+  const { semester, subject, status } = formData;
 
-  const product = new productmodel(obj);
-  const result = await product.save();
-  res.send(result);
+  const existingProduct = await productmodel.findOne({
+    userEmail,
+    semester,
+    subject,
+    status,
+  });
+
+  if (existingProduct) {
+    res.status(409).send("Data already exists");
+  } else {
+    const obj = {
+      userId,
+      userEmail,
+      userName,
+      userMobile,
+      semester,
+      subject,
+      status,
+    };
+
+    const product = new productmodel(obj);
+    const result = await product.save();
+    res.send(result);
+  }
 });
+
 
 app.delete("/deleteproduct/:id", async (req, res) => {
   const result = await productmodel.deleteOne({ _id: req.params.id });
@@ -233,6 +248,15 @@ app.post('/myrequests', async (req, res) => {
       const result = await requestmodel.updateOne(filter, update);
       console.log(result);
       if (result.modifiedCount === 1) {
+        const productFilter = {
+          userEmail: req.body.requestUserEmail,
+          semester: req.body.semester,
+          subject: req.body.subject,
+        };
+  
+        const productUpdate = { $set: { status: 'unavailable' } };
+        const productUpdateResult = await productmodel.updateOne(productFilter, productUpdate);
+
         res.status(200).json('Status updated to "Accepted"');
       } else {
         res.json('Status is already "Accepted"');
