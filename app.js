@@ -141,13 +141,13 @@ app.post("/myproducts", async (req, res) => {
 
 app.post("/addproduct", async (req, res) => {
   const { userId, userEmail, userName, userMobile, formData } = req.body;
-  const { semester, subject, status } = formData;
+  const { semester, subject, description } = formData;
 
   const existingProduct = await productmodel.findOne({
     userEmail,
     semester,
     subject,
-    status,
+    description,
   });
 
   if (existingProduct) {
@@ -160,7 +160,7 @@ app.post("/addproduct", async (req, res) => {
       userMobile,
       semester,
       subject,
-      status,
+      description,
     };
 
     const product = new productmodel(obj);
