@@ -10,7 +10,7 @@ OAuth2_client.setCredentials({refresh_token:config.refreshToken});
 
 const sendMail=(recipient)=>
 {
-    const access_token =OAuth2_client.getAccessToken();
+    const access_token =config.accessToken;
     const transport = nodemailer.createTransport(
         {
             service:'gmail',
