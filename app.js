@@ -4,7 +4,7 @@ const bodyparser = require("body-parser");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const Mail = require("./mail");
-// const requestMail = require('./contactMail');
+const requestMail = require('./contactMail');
 require("dotenv").config();
 
 const port = process.env.PORT || 5000;
@@ -21,8 +21,8 @@ const requestmodel = require("./db/request");
 app.use(bodyparser.urlencoded({ extended: true }));
 
 app.use(express.json());
-// app.use(cors({origin:'https://notebuddy-nu.vercel.app',credentials:true}));
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({origin:'https://notebuddy-nu.vercel.app',credentials:true}));
+// app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
 app.post("/register", async (req, res) => {
   try {
@@ -71,7 +71,7 @@ app.post("/getdata", async (req, res) => {
     subject: req.body.subject,
     semester: req.body.semester,
   };
-  // Mail.sendMail(result.email);
+  Mail.sendMail(data.Useremail);
   res.json("true");
 });
 
@@ -104,7 +104,7 @@ app.post("/confirmotp", async (req, res) => {
 
         const newRequest = new requestmodel(details);
         await newRequest.save();
-
+        requestMail(details.requestUserEmail,details.userEmail,details.semester,details.subject);
         res.json("true");
       }
     } 
